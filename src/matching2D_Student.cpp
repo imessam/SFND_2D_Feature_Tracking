@@ -7,12 +7,22 @@ using namespace std;
 void matchDescriptors(vector<cv::KeyPoint> &kPtsSource, vector<cv::KeyPoint> &kPtsRef, cv::Mat &descSource, cv::Mat &descRef,
                       vector<cv::DMatch> &matches, string descriptorType, string matcherType, string selectorType, int &match_num)
 {
+    if(descSource.cols != descRef.cols  || descSource.rows != descRef.rows)
+        return;
+    
+    
+
     // configure matcher
     bool crossCheck = false;
     cv::Ptr<cv::DescriptorMatcher> matcher;
 
     if (matcherType.compare("MAT_BF") == 0)
     {
+        if (descSource.type() != CV_8U)
+        { // OpenCV bug workaround : convert binary descriptors to floating point due to a bug in current OpenCV implementation
+            descSource.convertTo(descSource, CV_8U);
+            descRef.convertTo(descRef, CV_8U);
+        }
         int normType = cv::NORM_HAMMING;
         matcher = cv::BFMatcher::create(normType, crossCheck);
     }
@@ -29,7 +39,6 @@ void matchDescriptors(vector<cv::KeyPoint> &kPtsSource, vector<cv::KeyPoint> &kP
     // perform matching task
     if (selectorType.compare("SEL_NN") == 0)
     { // nearest neighbor (best match)
-
         matcher->match(descSource, descRef, matches); // Finds the best match for each descriptor in desc1
     }
     else if (selectorType.compare("SEL_KNN") == 0)
@@ -60,10 +69,10 @@ void matchDescriptors(vector<cv::KeyPoint> &kPtsSource, vector<cv::KeyPoint> &kP
 // Use one of several types of state-of-art descriptors to uniquely identify keypoints
 void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descriptors, string descriptorType, float &desc_time)
 {
+
+
     // select appropriate descriptor
     cv::Ptr<cv::DescriptorExtractor> extractor;
-
-    "BRISK"; // BRIEF, ORB, FREAK, AKAZE, SIFT
 
     enum detectorTypeEnum{
         BRISK,
