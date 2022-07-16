@@ -58,9 +58,10 @@ int main(int argc, const char *argv[])
 
     for(string detectorType : detectors){
         for(string descriptorType : descriptors){
-            if((detectorType.compare("AKAZE") && !descriptorType.compare("AKAZE")) || 
-            (!detectorType.compare("AKAZE") && descriptorType.compare("AKAZE")) ||
-            (detectorType.compare("SIFT") && descriptorType.compare("ORB"))){
+            if((detectorType.compare("AKAZE") == 0 && descriptorType.compare("AKAZE") != 0) || 
+            (detectorType.compare("AKAZE") != 0 && descriptorType.compare("AKAZE") == 0) ||
+            (detectorType.compare("SIFT") == 0 && descriptorType.compare("ORB") == 0)){
+                cout<<detectorType<<" , "<<descriptorType<<endl;
                 continue;
             }
             for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex++)
