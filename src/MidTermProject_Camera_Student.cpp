@@ -41,6 +41,22 @@ int main(int argc, const char *argv[])
     vector<DataFrame> dataBuffer; // list of data frames which are held in memory at the same time
     bool bVis = false;            // visualize results
 
+    std::ofstream myfile;
+    std::unordered_map<std::string,std::string*> map;
+
+    std::string detections_num[11];
+    std::string detections_time[11];
+
+    std::string descriptors_time[11];
+
+    std::string matching_num[11];
+
+    int det_num,match_num;
+    float det_time,desc_time;
+
+    string detectorType = "SIFT";
+    string descriptorType = "SIFT";
+
     /* MAIN LOOP OVER ALL IMAGES */
 
     for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex++)
@@ -93,8 +109,7 @@ int main(int argc, const char *argv[])
             {"AKAZE",MODERN},
             {"SIFT",MODERN}
         };
-        string detectorType = "FAST";
-
+        detectorType = "FAST";
         //// STUDENT ASSIGNMENT
         //// TASK MP.2 -> add the following keypoint detectors in file matching2D.cpp and enable string-based selection based on detectorType
         //// -> HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
@@ -102,19 +117,18 @@ int main(int argc, const char *argv[])
         switch (map[detectorType])
         {
             case SHITOMASI:
-                detKeypointsShiTomasi(keypoints, imgGray, false);
+                detKeypointsShiTomasi(keypoints, imgGray, det_num, det_time, false);
                 break;
 
             case HARRIS:
-                detKeypointsHarris(keypoints, imgGray, false);
+                detKeypointsHarris(keypoints, imgGray, det_num, det_time, false);
                 break;
 
             default:
-                detKeypointsModern(keypoints, imgGray, detectorType, false);
+                detKeypointsModern(keypoints, imgGray, detectorType, det_num, det_time, false);
                 break;
         }
         //// EOF STUDENT ASSIGNMENT
-
         //// STUDENT ASSIGNMENT
         //// TASK MP.3 -> only keep keypoints on the preceding vehicle
 
@@ -164,8 +178,8 @@ int main(int argc, const char *argv[])
         //// -> BRIEF, ORB, FREAK, AKAZE, SIFT
 
         cv::Mat descriptors;
-        string descriptorType = "ORB"; // BRIEF, ORB, FREAK, AKAZE, SIFT
-        descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType);
+        descriptorType = "ORB"; // BRIEF, ORB, FREAK, AKAZE, SIFT
+        descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType, desc_time);
         //// EOF STUDENT ASSIGNMENT
 
         // push descriptors for current frame to end of data buffer
@@ -181,7 +195,7 @@ int main(int argc, const char *argv[])
             vector<cv::DMatch> matches;
             string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
             string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
-            string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
+            string selectorType = "SEL_NN";       // SEL_NN, SEL_KNN
 
             //// STUDENT ASSIGNMENT
             //// TASK MP.5 -> add FLANN matching in file matching2D.cpp
@@ -189,7 +203,7 @@ int main(int argc, const char *argv[])
 
             matchDescriptors((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints,
                              (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
-                             matches, descriptorType, matcherType, selectorType);
+                             matches, descriptorType, matcherType, selectorType, match_num);
 
             //// EOF STUDENT ASSIGNMENT
 
@@ -218,7 +232,30 @@ int main(int argc, const char *argv[])
             bVis = false;
         }
 
+        detections_num[imgIndex+1] += to_string(det_num)+",";
+        detections_time[imgIndex+1] += to_string(det_time)+",";
+        descriptors_time[imgIndex+1] += to_string(desc_time)+",";
+        matching_num[imgIndex+1] += ""+to_string(match_num)+",";
+
     } // eof loop over all images
+
+    detections_num[0] += detectorType+" & "+descriptorType+",";
+    detections_time[0] += detectorType+" & "+descriptorType+",";
+    descriptors_time[0] += detectorType+" & "+descriptorType+",";
+    matching_num[0] += detectorType+" & "+descriptorType+",";
+
+    map["detections_num.csv"] = detections_num;
+    map["detections_time.csv"] = detections_time;
+    map["descriptors_time.csv"] = descriptors_time;
+    map["matching_num.csv"] = matching_num;
+
+    for(const auto& it : map){
+        myfile.open(it.first);
+        for(int i = 0; i<11; i++) {
+            myfile << it.second[i] << "\n";
+        }
+        myfile.close();
+    }
 
     return 0;
 }

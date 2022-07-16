@@ -5,7 +5,7 @@ using namespace std;
 
 // Find best matches for keypoints in two camera images based on several matching methods
 void matchDescriptors(vector<cv::KeyPoint> &kPtsSource, vector<cv::KeyPoint> &kPtsRef, cv::Mat &descSource, cv::Mat &descRef,
-                      vector<cv::DMatch> &matches, string descriptorType, string matcherType, string selectorType)
+                      vector<cv::DMatch> &matches, string descriptorType, string matcherType, string selectorType, int &match_num)
 {
     // configure matcher
     bool crossCheck = false;
@@ -54,10 +54,11 @@ void matchDescriptors(vector<cv::KeyPoint> &kPtsSource, vector<cv::KeyPoint> &kP
         }
         cout << "# keypoints removed = " << knn_matches.size() - matches.size() << endl;
     }
+    match_num = matches.size();
 }
 
 // Use one of several types of state-of-art descriptors to uniquely identify keypoints
-void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descriptors, string descriptorType)
+void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descriptors, string descriptorType, float &desc_time)
 {
     // select appropriate descriptor
     cv::Ptr<cv::DescriptorExtractor> extractor;
@@ -115,10 +116,12 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descr
     extractor->compute(img, keypoints, descriptors);
     t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
     cout << descriptorType << " descriptor extraction in " << 1000 * t / 1.0 << " ms" << endl;
+
+    desc_time = 1000 * t / 1.0;
 }
 
 // Detect keypoints in image using the traditional Shi-Thomasi detector
-void detKeypointsShiTomasi(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis)
+void detKeypointsShiTomasi(vector<cv::KeyPoint> &keypoints, cv::Mat &img, int &det_num, float &det_time, bool bVis)
 {
     // compute detector parameters based on image size
     int blockSize = 4;       //  size of an average block for computing a derivative covariation matrix over each pixel neighborhood
@@ -156,9 +159,11 @@ void detKeypointsShiTomasi(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool b
         imshow(windowName, visImage);
         cv::waitKey(0);
     }
+    det_num = keypoints.size();
+    det_time = 1000 * t / 1.0;
 }
 
-void detKeypointsHarris(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis)
+void detKeypointsHarris(vector<cv::KeyPoint> &keypoints, cv::Mat &img, int &det_num, float &det_time, bool bVis)
 {
 
     // compute detector parameters based on image size
@@ -196,9 +201,11 @@ void detKeypointsHarris(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis
         imshow(windowName, visImage);
         cv::waitKey(0);
     }
+    det_num = keypoints.size();
+    det_time = 1000 * t / 1.0;
 }
 
-void detKeypointsModern(vector<cv::KeyPoint> &keypoints, cv::Mat &img, std::string detectorType, bool bVis){
+void detKeypointsModern(vector<cv::KeyPoint> &keypoints, cv::Mat &img, std::string detectorType, int &det_num, float &det_time, bool bVis){
 
     cv::Ptr<cv::FeatureDetector> detector;
 
@@ -257,4 +264,6 @@ void detKeypointsModern(vector<cv::KeyPoint> &keypoints, cv::Mat &img, std::stri
         cv::waitKey(0);
     }
 
+    det_num = keypoints.size();
+    det_time = 1000 * t / 1.0;
 }
